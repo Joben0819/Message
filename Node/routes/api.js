@@ -1,0 +1,49 @@
+import express from'express'
+import {WebSocketServer} from "ws";
+import { all_comment,create_message } from '../controller/MessageController.js';
+import jwt from "jsonwebtoken"
+import {authenticateToken, authenticateWsConnection} from "../middleware/authMiddleware.js";
+import { Login, Register,  AllUser, SearchUser} from '../controller/LoginController.js';
+const wss = new  WebSocketServer({port: 8080})
+const router = express.Router()
+
+router.post('/login', Login)
+router.post('/register', Register)
+function withAuth(handler){
+    return async(ws, req) =>{
+        //const user = await authenticateWsConnection(req)
+        // if(!user){
+        //     ws.close()
+        //     console.log('here')
+        // }
+        handler(ws, req)
+    }
+}
+wss.on("connection", withAuth((ws, req, user) =>{
+        const token = req.headers["sec-websocket-protocol"]
+    console.log('connected',token)
+    const secretKey = "00"
+    if(token){
+        try{
+        const jwt_token = jwt.verify(token, secretKey)
+        console.log(jwt_token, 'ss')
+        ws.on("message",  (e) =>{
+            create_message(ws, e, jwt_token,wss)
+        })
+        }catch(err){
+            console.log(err, 'error')
+            ws.close()
+        }
+        // if(jwt_token){
+
+        // }
+    }
+    //ws.send(JSON.stringify(jwt_token.username), 'hellow world')
+}))
+console.log("WebSocket server running on ws://localhost:8080");
+router.use(authenticateToken)
+
+router.post('/allcomment', all_comment)
+router.post('/users', authenticateToken, AllUser)
+router.post('/searchuser', SearchUser)
+export default router
