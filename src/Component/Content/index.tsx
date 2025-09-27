@@ -9,12 +9,22 @@ interface Tcontent{
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   user: string;
 }
+interface Tsubtotal{
+  created_at : string
+group : string
+message : string 
+sender : string
+user_id: string
+__v: number
+_id: string
+}
 interface Tsub_content{
-  subtotal: [];
+  subtotal: Tsubtotal[];
 }
 interface data{
-  message: string
-  sender: string
+  message: string;
+  sender: string;
+  _id: string;
 }
 const Content = ({api, onSubmit, user}: Tcontent) => {
 const {session} = Zustand()
@@ -28,7 +38,7 @@ const {session} = Zustand()
         <img src={icon_user} alt="user" style={{display: user.length !== 0 ? '' : 'none'}} />  <span style={{display: user.length !== 0 ? '' : 'none'}}>{user}</span>
       </div>
       <div className={styles.top}>
-        {api.subtotal.filter((data: any, index, self) => index === self.findIndex((d: any) => (d._id === data._id))).map((data: data, index: number) => {
+        {api.subtotal.filter((val: data, index, self) => index === self.findIndex((d: data) => (d._id === val._id))).map((data: data, index: number) => {
           return(
             <div key={index} style={{textAlign: data.sender === session?.username ? 'end' : 'start'}}>
             {data.message}

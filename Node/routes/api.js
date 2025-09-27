@@ -1,6 +1,6 @@
 import express from'express'
 import {WebSocketServer} from "ws";
-import { all_comment,create_message } from '../controller/MessageController.js';
+import { all_comment,create_message, other_comment } from '../controller/MessageController.js';
 import jwt from "jsonwebtoken"
 import {authenticateToken, authenticateWsConnection} from "../middleware/authMiddleware.js";
 import { Login, Register,  AllUser, SearchUser} from '../controller/LoginController.js';
@@ -44,6 +44,7 @@ console.log("WebSocket server running on ws://localhost:8080");
 router.use(authenticateToken)
 
 router.post('/allcomment', all_comment)
+router.post('/othercomment', other_comment)
 router.post('/users', authenticateToken, AllUser)
 router.post('/searchuser', SearchUser)
 export default router

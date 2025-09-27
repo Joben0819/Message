@@ -7,7 +7,7 @@ import { data } from 'react-router'
 interface Tsidebar{
     api: Contents
     func: (e:string) => void,
-    notification: string[],
+    notification: Tmessage[],
     resetNotif: () => void,
     token?: string,
     active?: string
@@ -18,14 +18,26 @@ interface Contents{
 interface data{
     username: string
 }
+interface Tmessage{
+    sender: string
+}
 const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) => {
     const [search, setsearch] = useState<string>('')
     const [value, setvalue] = useState<[]>([])
+    const [user, setuser] = useState<{[n:string]: string}>({})
     useEffect(()=>{
+        const obj: {[n:string]: string} = {}
+        api.persons.forEach((element: data) => {
+            console.log(element, 'element')
+            obj[element.username] = element.username
+        });
+        console.log( notification, 'dsdsd',obj,user, api )
+        // const result = new Set(Object.values(obj));
 
-    },[notification])
+        setuser(obj)
+    },[notification, api])
     const onSearch = () =>{
-        if(search === ''){
+        if(search === ''){ 
             alert('No CONTEXT')
         }else{
             fetchApi('searchuser', {username: search}, token).then(res =>{
@@ -47,13 +59,18 @@ const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) 
                 )       
             })}
         </div>
+        
         {Object.keys(api).length !== 0 && api.persons.map((data: data, index:number) => {
             return(
-                
-                <div key={index} className={styles.card} onClick={() => {func(data.username); resetNotif()}} style={{color: notification.find((val: string) => val === data.username ) ? 'red' : '', backgroundColor: active === data.username ? 'grey' : ''}}> <img src={icon_user} alt="user" /> <span>{data.username}</span></div>
-                
+                <div key={index} className={styles.card} onClick={() => {func(data.username); resetNotif()}} style={{color: notification.find((val) => val.sender === data.username ) ? 'red' : '', backgroundColor: active === data.username ? 'grey' : ''}}> <img src={icon_user} alt="user" /> <span>{data.username}</span></div>
             )
         })}
+        {
+            notification.filter((val) => user[val.sender] !== val.sender).map((data, index) =>{
+                return(<div key={index} className={styles.card} onClick={()=>{func(data.sender); resetNotif()}}>New Message{data.sender}</div>
+                )
+            })
+        }
     </div>
   )
 }

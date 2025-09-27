@@ -1,6 +1,6 @@
 import Message from "../models/Message.js";
 import {addChannel} from './LoginController.js'
-
+import Users from "../models/Users.js";
 export const all_comment = async(req,res) =>{
     const {group} = req.body
     const header  = req.user.username
@@ -8,6 +8,21 @@ export const all_comment = async(req,res) =>{
     const subtotal = userMessage.filter((data, index) => 
         data.group === `${group}, ${header}` || data.group === `${header}, ${group}`
     )
+    return res.status(200).json({subtotal});
+}
+
+export const other_comment = async(req,res) =>{
+    //const {group} = req.body
+    const header = req.user.username
+    const userData = await Users.findOne({_id: req.user._id})
+    const userMessage = await Message.find()
+    const groupList = userData.channel.split(',')
+    const subtotal = userMessage.filter((data, index) => {
+        const user = data.group.split(',')
+        if(user[0] === header){
+            return groupList.find(data => data === user[1].trim()) !== user[1].trim() ? data : null
+        }
+    })
     return res.status(200).json({subtotal});
 }
 

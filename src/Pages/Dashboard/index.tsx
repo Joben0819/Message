@@ -8,7 +8,16 @@ interface tSidebar{
     persons: []
 }
 interface tContents{
-    subtotal: any[]
+    subtotal: Tsubtotal[]
+}
+interface Tsubtotal{
+  created_at : string
+group : string
+message : string 
+sender : string
+user_id: string
+__v: number
+_id: string
 }
 const Dashboard = () => {
 const { session} = Zustand();
@@ -19,7 +28,7 @@ const [message, setmessage] = useState<tContents>({
   subtotal: []
 })
 const [person, setperson] = useState<string>('')
-const [notification, setnotification] = useState<string[]>([''])
+const [notification, setnotification] = useState<Tsubtotal[]>([])
 interface Tmessage{
   message: string | null,
   group: string
@@ -40,6 +49,14 @@ const Person = (e: string) =>{
     res =>{
       console.log(res)
       setmessage(res)
+    })
+}
+
+const OtherComment = () =>{
+  fetchApi('othercomment', {}, session?.token).then(
+    res =>{
+      console.log(res)
+      setnotification(res.subtotal)
     })
 }
 
@@ -75,7 +92,7 @@ const Websocket = (message?: string, group?: string) =>{
     if(data.group === `${person}, ${session?.username}` || data.group === `${session?.username}, ${person}`){
     setmessage(prev => ({ subtotal: [...prev.subtotal, data] }))
     }else{
-      const value = [...notification  , data.sender as string]
+      const value = [...notification , data]
       
       setnotification(value)
     }
@@ -87,10 +104,13 @@ const Websocket = (message?: string, group?: string) =>{
 const resetNotif = () => {
   console.log('here')
   setnotification([])
+  ApiSidebar();
+  OtherComment();
 }
 useEffect(()=>{
     ApiSidebar();
-    console.log('here')
+    OtherComment();
+        console.log('here')
   const ws = Websocket(); // capture socket
   return () => {
     ws?.close(); // close when component unmounts
