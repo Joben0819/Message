@@ -1,4 +1,4 @@
-import express from'express'
+import express, { json } from'express'
 import {WebSocketServer} from "ws";
 import { all_comment,create_message, other_comment } from '../controller/MessageController.js';
 import jwt from "jsonwebtoken"
@@ -21,17 +21,23 @@ function withAuth(handler){
 }
 wss.on("connection", withAuth((ws, req, user) =>{
         const token = req.headers["sec-websocket-protocol"]
-    console.log('connected',token)
+    //console.log('connected')
     const secretKey = "00"
     if(token){
         try{
         const jwt_token = jwt.verify(token, secretKey)
         console.log(jwt_token, 'ss')
         ws.on("message",  (e) =>{
+            console.log(JSON.parse(e), 'message')
             create_message(ws, e, jwt_token,wss)
+            // wss.clients.forEach((client) => {
+            //     if (client !== ws && client.readyState === 1) {
+            //         client.send(message.toString());
+            //     }
+            // });
         })
         }catch(err){
-            console.log(err, 'error')
+            //console.log(err, 'error')
             ws.close()
         }
         // if(jwt_token){

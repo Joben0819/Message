@@ -8,6 +8,7 @@ interface Tcontent{
   api: Tsub_content;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   user: string;
+  onClick: () => void;
 }
 interface Tsubtotal{
   created_at : string
@@ -26,7 +27,7 @@ interface data{
   sender: string;
   _id: string;
 }
-const Content = ({api, onSubmit, user}: Tcontent) => {
+const Content = ({api, onSubmit, user, onClick}: Tcontent) => {
 const {session} = Zustand()
   useEffect(()=>{
     console.log(api)
@@ -36,6 +37,7 @@ const {session} = Zustand()
     <div className={styles.Content}>
       <div className={styles.user} >
         <img src={icon_user} alt="user" style={{display: user.length !== 0 ? '' : 'none'}} />  <span style={{display: user.length !== 0 ? '' : 'none'}}>{user}</span>
+        <div onClick={onClick}>Call</div>
       </div>
       <div className={styles.top}>
         {api.subtotal.filter((val: data, index, self) => index === self.findIndex((d: data) => (d._id === val._id))).map((data: data, index: number) => {
@@ -48,8 +50,8 @@ const {session} = Zustand()
       </div>
       <div className={styles.bottom}>
         <form onSubmit={onSubmit} >
-        <Input placeholder="Send text" name="content"/>
-        <Button btn='submit' context="Send"/>
+          <Input placeholder="Send text" name="content"/>
+          <Button btn='submit' context="Send"/>
         </form>
       </div>
     </div>

@@ -1,12 +1,13 @@
 import React from 'react'
 interface Ttype{
-    btn: string;
-    context: string
+    btn: "submit" | "reset" | "button";
+    context: string;
+    onClick?: () => void;
 }
-const Button = ({btn, context}: Ttype) => {
-    const typebtn = btn ?? "submit"
+const Button = ({btn = "submit", context, onClick}: Ttype) => {
+    //const typebtn = btn ?? "submit"
   return (
-    <button type={typebtn}> {context}</button>
+    <button type={btn} onClick={onClick}> {context}</button>
   )
 }
 

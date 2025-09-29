@@ -27,22 +27,32 @@ export const other_comment = async(req,res) =>{
 }
 
 export const create_message = async(ws, e, req, wss) =>{
-    const {message, group } = JSON.parse(e)
-    const allgroup = `${group}, ${req.username}`
-    // if(!message){
-    //     return res.status(404).json({"messagee": 'no message'})
-    // }else{
-        addChannel(req, group)
-        const overall = {message: message,group: allgroup, 'user_id': req._id, sender: req.username}
-        const newmessge = new Message(overall)
-        const fetch = await newmessge.save()
-        //console.log(fetch)
-        // ws.send(JSON.stringify(fetch))
-        wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(fetch));
-        }
+    if(JSON.parse(e).type){
+        // const message = JSON.parse(e)
+        wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === 1) {
+                client.send(e.toString());
+            }
         });
-        // return 
-    // }
+    }else{
+        const {message, group } = JSON.parse(e)
+        //CONSOLE.log(JSON.parse(e), 'message')
+        const allgroup = `${group}, ${req.username}`
+        if(!message){
+            return res.status(404).json({"messagee": 'no message'})
+        }else{
+            addChannel(req, group)
+            const overall = {message: message,group: allgroup, 'user_id': req._id, sender: req.username}
+            const newmessge = new Message(overall)
+            const fetch = await newmessge.save()
+            console.log(fetch)
+            ws.send(JSON.stringify(fetch))
+            wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(fetch));
+            }
+            });
+            // return 
+        }
+    }
 }   

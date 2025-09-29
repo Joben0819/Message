@@ -3,6 +3,8 @@ import styles from './style.module.scss'
 import { fetchApi } from '../../api/api'
 import icon_user from '../../assets/user.png'
 import { data } from 'react-router'
+import Input from '../../reusable/Input'
+import Button from '../../reusable/Buttons'
 
 interface Tsidebar{
     api: Contents
@@ -28,10 +30,10 @@ const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) 
     useEffect(()=>{
         const obj: {[n:string]: string} = {}
         api.persons.forEach((element: data) => {
-            console.log(element, 'element')
+            // console.log(element, 'element')
             obj[element.username] = element.username
         });
-        console.log( notification, 'dsdsd',obj,user, api )
+        // console.log( notification, 'dsdsd',obj,user, api )
         // const result = new Set(Object.values(obj));
 
         setuser(obj)
@@ -45,12 +47,16 @@ const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) 
                 setvalue(res.persons)
             })
         }
+
+    }
+    const onChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
+        setsearch(e.target.value)
     }
   return (
     <div className={styles.sidebar}>
         <div className={styles.search}>
-            <input type="text" placeholder='Search People' onChange={(e) => setsearch(e.target.value)}/>
-            <button onClick={onSearch}>Search</button>
+            <Input placeholder="Search People" onchange={onChange}  name=""/>
+            <Button btn='submit' context="Search" onClick={onSearch}/>
         </div>
         <div className={styles.lists}>
             {value.map((data: data, index: number) => {
