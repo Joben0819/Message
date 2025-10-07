@@ -3,16 +3,44 @@ import mongoose from "mongoose";
 import useRouter from "./routes/api.js";
 import jwt from 'jsonwebtoken'
 import cors from 'cors'
+import path from 'path'
+import { fileURLToPath } from 'url';
 const app = express();
 const PORT = 3001;
 app.use(express.urlencoded({ extended: true }));
-app.post("/", (req, res) => {
-  res.send("Hello World!");
+// Create __dirname manually
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'dist')));
+// For any route, send the React index.html
+app.get('/:name', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+});
+app.get('/assets/:name' , (req, res) => {
+  const {name} = req.params
+  res.sendFile(path.join(__dirname, '../dist/assets', name));
+});
+// http://localhost:3001/assets
+// app.get('/login', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+// });
+
+// app.get('/assets/index-BMDFlihq.js', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../dist/assets', 'index-BMDFlihq.js'));
+// });
+
+
 
 app.use(cors());
 
 app.use(express.json());
+
+
 // MongoDB connection
 async function connect() {
   try {

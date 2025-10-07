@@ -1,4 +1,4 @@
-import React from 'react'
+
 interface Ttype{
     btn: "submit" | "reset" | "button";
     context: string;
