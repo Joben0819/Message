@@ -10,18 +10,22 @@ const Login = () => {
     const form = new FormData(e.currentTarget)
     const password = Number(form.get("password"))
     const username = form.get("username")
+    alert(password)
       if(password){
         const data = {
             username: username,
             password: password
         }
+        alert('has passwords')
         fetchApi(register ? 'register' : 'login', data).then((res) => {
           if(res.status === 200){
+            alert('went in')
           setsession(res); 
           window.location.pathname = '/'
           }
         })
       }else{
+        alert('went out')
         alert('password must be number and username must be text')
       }
 

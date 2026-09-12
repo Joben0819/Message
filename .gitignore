@@ -11,8 +11,16 @@ node_modules
 dist
 dist-ssr
 *.local
-./Node/node_modules
-./Node/dist
+
+/mobile/.expo/
+/mobile/dist/
+/mobile/web-build/
+/mobile/expo-env.d.ts
+/mobile/.gitignore
+/mobile/node_modules
+/Node/node_modules
+/Node/dist
+/Node/cert
 ./Node/dist-ssr
 ./Node/*.local
 # Editor directories and files

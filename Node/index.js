@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken'
 import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url';
+import Https from 'https';
+import fs from 'fs';
 const app = express();
 const PORT = 3001;
 app.use(express.urlencoded({ extended: true }));
@@ -12,19 +14,19 @@ app.use(express.urlencoded({ extended: true }));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'dist')));
-// For any route, send the React index.html
-app.get('/:name', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
-});
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
-});
-app.get('/assets/:name' , (req, res) => {
-  const {name} = req.params
-  res.sendFile(path.join(__dirname, '../dist/assets', name));
-});
+// // Serve static files
+// app.use(express.static(path.join(__dirname, 'dist')));
+// // For any route, send the React index.html
+// app.get('/:name', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+// });
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+// });
+// app.get('/assets/:name' , (req, res) => {
+//   const {name} = req.params
+//   res.sendFile(path.join(__dirname, '../dist/assets', name));
+// });
 // http://localhost:3001/assets
 // app.get('/login', (req, res) => {
 //   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
@@ -56,16 +58,24 @@ connect();
 
 app.use("/api", useRouter);
 const secretKey = "00";
-// app.post("/login", (req,res)=>{
-//   const user = {name: "Ven"} 
-//   const token = jwt.sign(user, secretKey, { expiresIn: "1h" });
-//   res.json({token: token})
-// })
+app.post("/login", (req,res)=>{
+  const user = {name: "Ven"} 
+  const token = jwt.sign(user, secretKey, { expiresIn: "1h" });
+  res.json({token: token})
+})
 
 // app.get("/dashboard", authenticateToken, (req, res) => {
 //   res.json({ message: `Welcome this ${req.user.name} is your dashboard!` });
 // });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+// const sslOptions = {
+//     key: fs.readFileSync("./cert/server.key"),
+//     cert: fs.readFileSync("./cert/server.crt"),
+// };
+
+// Https.createServer(sslOptions, app).listen(3001, "0.0.0.0", () => {
+//     console.log("HTTPS server running on https://192.168.254.108:3001");
+// });

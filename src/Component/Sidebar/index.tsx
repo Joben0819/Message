@@ -5,6 +5,7 @@ import icon_user from '../../assets/user.png'
 import { data } from 'react-router'
 import Input from '../../reusable/Input'
 import Button from '../../reusable/Buttons'
+import { Zustand } from '../../store'
 
 interface Tsidebar{
     api: Contents
@@ -22,11 +23,15 @@ interface data{
 }
 interface Tmessage{
     sender: string
+    reciever: string
 }
-const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) => {
+const Sidebar = ({api, func, notification, resetNotif, token, active}: Tsidebar) => {
     const [search, setsearch] = useState<string>('')
     const [value, setvalue] = useState<[]>([])
     const [user, setuser] = useState<{[n:string]: string}>({})
+    const [sizer, setsizer] = useState(false)
+    const sessional = Zustand((state) => state.session)
+
     useEffect(()=>{
         const obj: {[n:string]: string} = {}
         api.persons.forEach((element: data) => {
@@ -52,29 +57,107 @@ const Sidebar = ({api, func, notification,resetNotif, token, active}: Tsidebar) 
     const onChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
         setsearch(e.target.value)
     }
+    useEffect(() =>{
+        const valueated = notification.filter((val) => user[val.sender] !== val.sender)
+        console.log(valueated, 'evaluated', user, notification)
+    },[user,value])
+
+    useEffect(()=>{
+        const handleResize = () => {
+        const el = document.body;
+        // const container = document.getElementById('container')
+        // container!.style.width = el.clientWidth - 700 + 'px'
+        setsizer(el.clientWidth <= 440)
+        }
+
+        handleResize()
+
+        window.addEventListener('resize', handleResize)
+        return () =>{
+            window.removeEventListener('resize', handleResize)
+        }
+    } ,[])
   return (
-    <div className={styles.sidebar}>
+    <div className={styles.sidebar} style={{display: sizer ? active?.length === 0 ? 'block' : 'none' : 'block'}}>
         <div className={styles.search}>
             <Input placeholder="Search People" onchange={onChange}  name=""/>
             <Button btn='submit' context="Search" onClick={onSearch}/>
         </div>
         <div className={styles.lists}>
-            {value.map((data: data, index: number) => {
+            {value.map((person: data) => {
                 return(
-                    <div key={index} className={styles.card} onClick={() => {func(data.username)}} style={{cursor: 'pointer'}}> <img src={icon_user} alt="user" /> <span>{data.username}</span></div>
+                    <button
+                        key={person.username}
+                        type="button"
+                        className={styles.card}
+                        onClick={() => { func(person.username); setTimeout(() =>{setvalue([])},200);}}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                func(person.username);
+                                setTimeout(() =>{setvalue([])},200);
+                            }
+                        }}
+                        style={{cursor: 'pointer'}}
+                    >
+                        <img src={icon_user} alt="" />
+                        <span>{person.username}</span>
+                    </button>
                 )       
             })}
         </div>
         
-        {Object.keys(api).length !== 0 && api.persons.map((data: data, index:number) => {
+        {Object.keys(api).length !== 0 && api.persons.map((person: data) => {
+            const hasNotification = notification.some((val) => val.sender === person.username);
             return(
-                <div key={index} className={styles.card} onClick={() => {func(data.username); resetNotif()}} style={{color: notification.find((val) => val.sender === data.username ) ? 'red' : '', backgroundColor: active === data.username ? 'grey' : ''}}> <img src={icon_user} alt="user" /> <span>{data.username}</span></div>
+                <button
+                    key={person.username}
+                    type="button"
+                    className={styles.card}
+                    onClick={() => {
+                        func(person.username); 
+                        resetNotif()
+                    }}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            func(person.username);
+                            resetNotif();
+                        }
+                    }}
+                    style={{
+                        color: hasNotification ? 'red' : '', 
+                        backgroundColor: active === person.username ? 'grey' : ''
+                    }}
+                > 
+                    <img src={icon_user} alt="" /> 
+                    <span>{person.username}</span>
+                </button>
             )
         })}
         {
-            notification.filter((val) => user[val.sender] !== val.sender).map((data, index) =>{
-                return(<div key={index} className={styles.card} onClick={()=>{func(data.sender); resetNotif()}}>New Message{data.sender}</div>
-                )
+            notification.map((data) =>{
+                if(sessional?.username === data?.reciever){
+                    return(
+                        <button
+                            key={`${data.sender}-${data.reciever}`}
+                            type="button"
+                            className={styles.card}
+                            onClick={()=>{func(data.sender); resetNotif()}}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    func(data.sender);
+                                    resetNotif();
+                                }
+                            }}
+                        >
+                            New Message {data.sender}
+                        </button>
+                    )
+                }
+                return null;
+
             })
         }
     </div>

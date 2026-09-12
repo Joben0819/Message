@@ -1,7 +1,5 @@
-const domain = 'http://localhost:3001/'
-
+const domain = 'http://192.168.254.108:3001/'
 export const fetchApi = async(pathname: string ,data: object, token?: string) =>{
- 
 const fetching = await fetch(domain + 'api/' + pathname, {
         method: "POST",
         headers:{
@@ -15,7 +13,6 @@ const fetching = await fetch(domain + 'api/' + pathname, {
     })
     const res = await fetching.json()
     if(fetching.status !== 200){
-        alert(res.message)
         setTimeout(() => { 
             window.location.pathname = '/login'
             localStorage.clear()

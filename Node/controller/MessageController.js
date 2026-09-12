@@ -38,14 +38,15 @@ export const create_message = async(ws, e, req, wss) =>{
         const {message, group } = JSON.parse(e)
         //CONSOLE.log(JSON.parse(e), 'message')
         const allgroup = `${group}, ${req.username}`
+        console.log(allgroup, 'here', req.username, group, JSON.parse(e))
         if(!message){
             return res.status(404).json({"messagee": 'no message'})
         }else{
             addChannel(req, group)
-            const overall = {message: message,group: allgroup, 'user_id': req._id, sender: req.username}
+            const overall = {message: message,group: allgroup, 'user_id': req._id, sender: req.username, reciever: group}
             const newmessge = new Message(overall)
             const fetch = await newmessge.save()
-            console.log(fetch)
+            console.log(fetch, 'fetch')
             ws.send(JSON.stringify(fetch))
             wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
