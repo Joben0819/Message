@@ -4,7 +4,9 @@ import { all_comment,create_message, other_comment } from '../controller/Message
 import jwt from "jsonwebtoken"
 import {authenticateToken, authenticateWsConnection} from "../middleware/authMiddleware.js";
 import { Login, Register,  AllUser, SearchUser} from '../controller/LoginController.js';
-const wss = new  WebSocketServer({port: 8080})
+import http from "http";
+const server = http.createServer();
+const wss = new  WebSocketServer({server})
 const router = express.Router()
 
 router.post('/login', Login)
@@ -29,6 +31,7 @@ wss.on("connection", withAuth((ws, req, user) =>{
         console.log(jwt_token, 'ss')
         ws.on("message",  (e) =>{
             console.log(JSON.parse(e), 'message')
+            console.log("📱 PHONE RECEIVED:", e);
             create_message(ws, e, jwt_token,wss)
             // wss.clients.forEach((client) => {
             //     if (client !== ws && client.readyState === 1) {
@@ -46,7 +49,29 @@ wss.on("connection", withAuth((ws, req, user) =>{
     }
     //ws.send(JSON.stringify(jwt_token.username), 'hellow world')
 }))
+
+// wss.on("connection", (ws, req) => {
+//   console.log("🔥 WebSocket CONNECTED");
+//   console.log("Client IP:", req.socket.remoteAddress);
+
+//   ws.on("message", (message) => {
+//     console.log("📩 Message:", message.toString());
+//   });
+
+//   ws.on("close", () => {
+//     console.log("❌ WebSocket CLOSED");
+//   });
+
+//   ws.on("error", (err) => {
+//     console.log("❌ WebSocket ERROR:", err);
+//   });
+// });
+
+
 console.log("WebSocket server running on ws://localhost:8080");
+server.listen(8080, "0.0.0.0", () => {
+  console.log("WebSocket server running on ws://0.0.0.0:8080");
+});
 router.use(authenticateToken)
 
 router.post('/allcomment', all_comment)

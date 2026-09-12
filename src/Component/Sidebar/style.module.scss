@@ -18,7 +18,8 @@
         }
     }
     .card{
-        margin-top: 1rem;
+        width: 91%;
+        margin: 1rem 0rem 0rem .5rem;
         height: 3rem;
         display: flex;
         justify-content: flex-start;
@@ -58,4 +59,9 @@
         }
     }
     
+}
+@media screen and (max-width: 767px) {
+ .sidebar{
+    width: 100%;
+ }
 }

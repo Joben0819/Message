@@ -15,6 +15,7 @@ interface Tsubtotal{
   group : string
   message : string 
   sender : string
+  reciever: string
   user_id: string
   __v: number
   _id: string
@@ -44,12 +45,19 @@ const Dashboard = () => {
   }
 
   const Person = (e: string) =>{
-    const group = {group: e}
-    setperson(e)
-    fetchApi('allcomment', group, session?.token).then(
-    res =>{
-      setmessage(res)
-    })
+    if(e.length !== 0){
+      const group = {group: e}
+      setperson(e)
+      console.log(e, 'persona', group)
+      fetchApi('allcomment', group, session?.token).then(
+      res =>{
+        setmessage(res)
+      })
+    }else{
+      setperson('')
+      setmessage({subtotal : []})
+
+    }
   }
 
   const OtherComment = () =>{
@@ -61,7 +69,7 @@ const Dashboard = () => {
 
 
   const Websocket = (message?: string, group?: string) =>{
-    const websocket = new WebSocket('ws://localhost:8080', session?.token)
+    const websocket = new WebSocket( window.location.hostname === "localhost" ? 'ws://localhost:8080' : 'ws://192.168.254.108:8080', session?.token)
     const text: Tmessage =  {
       message: message as string,
       group: group as string
@@ -72,7 +80,7 @@ const Dashboard = () => {
         websocket.send(JSON.stringify(text))
 
       }else{
-        alert('no message')
+        // alert('no message')
       }
       websocket.onmessage = (e) => {
         const data =  JSON.parse(e.data)
@@ -95,25 +103,178 @@ const Dashboard = () => {
     OtherComment();
   }
 
+
+
+  // --- inside Dashboard component ---
+
+// function to start a call
+const startCall = async () => {
+  // alert("calling");
+  console.log("WS REF:", wsRef.current);
+  console.log("WS STATE:", wsRef.current?.readyState);
+  console.log("WS OPEN:", WebSocket.OPEN);
+  console.log("PERSON:", person);
+  console.log("SESSION:", session?.username);
+  console.log(!pcRef.current, !wsRef.current, pcRef.current)
+  if (!pcRef.current || !wsRef.current) {
+    console.warn("⚠️ PeerConnection or WebSocket not ready");
+    alert("different device");
+    return;
+  }
+
+  if (!person) {
+    console.warn("⚠️ No person selected to call");
+    // alert(`${person}`);
+    return;
+  }
+
+  const offer = await pcRef.current.createOffer();
+
+  await pcRef.current.setLocalDescription(offer);
+
+  console.log("WS STATE AFTER OFFER:", wsRef.current.readyState);
+
+  if (wsRef.current.readyState === WebSocket.OPEN) {
+    wsRef.current.send(
+      JSON.stringify({
+        type: "offer",
+        from: session?.username,
+        target: person, // don't hardcode nethan
+        sdp: offer.sdp,
+      })
+    );
+
+    alert(`📞 Calling ${person} with offer`);
+    setcall(true);
+  } else {
+    console.warn(
+      "⚠️ WebSocket not open:",
+      wsRef.current.readyState
+    );
+
+    alert(`WebSocket state: ${wsRef.current.readyState}`);
+  }
+};
+
+const acceptCall = async (call: { from: string; sdp: string }) => {
+  setcall(true)
+  const pc = pcRef.current!;
+  const ws = wsRef.current!;
+  // // Apply remote offer
+  await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: call.sdp }));
+  console.log(call, 'from')
+  // Create + send answer
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  // alert(` 
+  //    type: "answer",
+  //   from: ${  session?.username},
+  //   target:${   call.from},
+  //   sdp: ${answer.sdp}`)
+
+  ws.send(JSON.stringify({
+    type: "answer",
+    from: session?.username,
+    target: call.from,
+    sdp: answer.sdp,
+  }));
+
+  // Clear popup
+  // setIncomingCall(null);
+};
+
+const rejectCall = () => {
+  console.log("❌ Call rejected");
+  setIncomingCall(null);
+  window.location.reload()
+};
+
+ const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formdata = new FormData(e.currentTarget)
+    //console.log(formdata.get("content"), person)
+    console.log(formdata.get("content"), 'onsubmit')
+    Websocket(formdata.get("content") as string, person)
+  //const ws = Websocket(formdata.get("content") as string, person); // capture socket
+
+    //ws?.close(); // close when component unmounts
+  
+  }
+
+const endCall = () => {
+  const ws = wsRef.current;
+
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(
+      JSON.stringify({
+        type: "hangup",
+        from: session?.username,
+        target: person,
+      })
+    );
+  }
+
+  cleanupCall();
+};
+
+const cleanupCall = () => {
+  const localVideo = document.getElementById("local") as HTMLVideoElement;
+  const remoteVideo = document.getElementById("remote") as HTMLVideoElement;
+
+  // Stop camera/microphone
+  if (localVideo?.srcObject) {
+    const stream = localVideo.srcObject as MediaStream;
+
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
+
+    localVideo.srcObject = null;
+  }
+
+  // Stop remote stream
+  if (remoteVideo?.srcObject) {
+    const stream = remoteVideo.srcObject as MediaStream;
+
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
+
+    remoteVideo.srcObject = null;
+  }
+
+  // Close WebRTC connection
+  if (pcRef.current) {
+    pcRef.current.close();
+    pcRef.current = null;
+    console.log(pcRef.current, !pcRef.current)
+    window.location.reload()
+  }
+
+  setcall(false);
+  setIncomingCall(null);
+};
+
   useEffect(() => {
     ApiSidebar();
     OtherComment();
-
+    console.log(wsRef.current, pcRef.current, 'other useEffect')
     // prevent double init
     if (wsRef.current || pcRef.current) {
       console.log("⚠️ WebSocket/PeerConnection already initialized");
       return;
     }
 
-    const ws = new WebSocket("ws://localhost:8080", session?.token || "");
+    const ws = new WebSocket( window.location.hostname === "localhost" ? 'ws://localhost:8080' : 'ws://192.168.254.108:8080', session?.token)
     wsRef.current = ws;
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
     pcRef.current = pc;
-
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(
+    console.log(navigator, 'navigator')
+    navigator?.mediaDevices?.getUserMedia({ video: true, audio: true }).then(
       (stream) => {
         const localVideo = document.getElementById("local") as HTMLVideoElement;
         if (localVideo) localVideo.srcObject = stream;
@@ -142,6 +303,7 @@ const Dashboard = () => {
     };
     pc.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log(session?.username, person, 'here')
         ws.send(JSON.stringify({ 
         type: "candidate",
         from: session?.username,
@@ -156,7 +318,7 @@ const Dashboard = () => {
 
     ws.onmessage = async (e) => {
       const data = JSON.parse(e.data);
-      console.log("Received message:", e);
+      console.log("Received message:", data);
       // --- Chat ---
       if (data.group) {
         if (
@@ -170,7 +332,9 @@ const Dashboard = () => {
       }
 
       if (data.type === "offer") {
+
         if(data.target === session?.username){
+          // alert('calling')
         console.log("📞 Incoming call from", data.from);
 
         // Save the offer so we can accept/reject later
@@ -183,7 +347,8 @@ const Dashboard = () => {
       // } 
       else if (data.type === "answer") {
         if (pc.signalingState === "have-local-offer") {
-          console.log('here',data)
+          console.log('here',data, call)
+          setcall(true)
           await pc.setRemoteDescription(new RTCSessionDescription(data));
         } else {
           console.warn(
@@ -194,6 +359,7 @@ const Dashboard = () => {
       }
 
       else if (data.type === "candidate") {
+        // alert('candidate went here')
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         } catch (err) {
@@ -210,108 +376,51 @@ const Dashboard = () => {
     };
   }, []);
 
+  // useEffect(()=>{
+  //   const handleResize = () => {
+  //   const el = document.body;
+  //   const container = document.getElementById('container')
+  //   container!.style.width = el.clientWidth - 700 + 'px'
+  //   //console.log(el.clientWidth)
+  //   }
 
-  // --- inside Dashboard component ---
+  //   handleResize()
 
-// function to start a call
-const startCall = async () => {
-  if (!pcRef.current || !wsRef.current) {
-    console.warn("⚠️ PeerConnection or WebSocket not ready");
-    return;
-  }
-  if (!person) {
-    console.warn("⚠️ No person selected to call");
-    return;
-  }
-  const offer = await pcRef.current!.createOffer();
-  await pcRef.current!.setLocalDescription(offer);
+  //   window.addEventListener('resize', handleResize)
+  //   return () =>{
+  //     window.removeEventListener('resize', handleResize)
+  //   }
+  // } ,[])
 
-  // send via the SAME websocket stored in wsRef
-  if (wsRef.current.readyState === WebSocket.OPEN) {
-    wsRef.current.send(
-      JSON.stringify({
-        type: "offer",
-        from: session?.username,
-        target: 'Anne',
-        sdp: offer.sdp,
-      })
-    );
-    console.log("📞 Calling", person, "with offer");
-    setcall(true)
-  } else {
-    console.warn("⚠️ WebSocket not open when trying to start call");
-  }
-};
+  useEffect(() =>{
+    console.log(incomingCall, 'incomingCall', wsRef.current,pcRef.current)
+  },[incomingCall])
 
-const acceptCall = async (call: { from: string; sdp: string }) => {
-  const pc = pcRef.current!;
-  const ws = wsRef.current!;
-  // // Apply remote offer
-  await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: call.sdp }));
-
-  // Create + send answer
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-
-  ws.send(JSON.stringify({
-    type: "answer",
-    from: session?.username,
-    target: call.from,
-    sdp: answer.sdp,
-  }));
-
-  // Clear popup
-  setIncomingCall(null);
-};
-
-const rejectCall = () => {
-  console.log("❌ Call rejected");
-  setIncomingCall(null);
-};
-
- const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formdata = new FormData(e.currentTarget)
-    //console.log(formdata.get("content"), person)
-    Websocket(formdata.get("content") as string, person)
-  //const ws = Websocket(formdata.get("content") as string, person); // capture socket
-
-    //ws?.close(); // close when component unmounts
-  
-  }
-  useEffect(()=>{
-    const handleResize = () => {
-    const el = document.body;
-    const container = document.getElementById('container')
-    container!.style.width = el.clientWidth - 72 + 'px'
-    //console.log(el.clientWidth)
-    }
-
-    handleResize()
-
-    window.addEventListener('resize', handleResize)
-    return () =>{
-      window.removeEventListener('resize', handleResize)
-    }
-  } ,[])
 
 
   return (
     <div className={styles.container} id='container'>
-      <div className={styles.videocall} style={{display: call ? 'block' : 'none'}}>
-      <video width='100' id="local" autoPlay playsInline muted></video>
-      <video width='100' id="remote" autoPlay playsInline></video>
+      {/* {activeCall && ( */}
+      <div className={styles.videocall} style={{display:call ? 'grid' : 'none'}}>
+        <video width='500' id="local" autoPlay playsInline muted className={styles.local}></video>
+        <video width='100' id="remote" className={styles.remote} autoPlay playsInline></video>
+        <button onClick={endCall}>End call</button>
       </div>
-        {incomingCall && (
-          <div className="call-popup">
-            <p>{incomingCall.from} is calling…</p>
-          <button onClick={() => acceptCall(incomingCall)}>Accept</button>
-            <button onClick={rejectCall}>Reject</button>
-          </div>
-        )}
- 
-      <Sidebar api={sidebar} func={Person} notification={notification} resetNotif={resetNotif} token={session?.token} active={person}/>
-      <Content api={message} onSubmit={onSubmit} user={person} onClick={startCall}/>
+      {incomingCall !== null && 
+      <div className={styles.call_popup}>
+        <div className={styles.modaL} >
+          <p>{incomingCall?.from} is calling…</p>
+          <button  onClick={() => acceptCall(incomingCall)}>Accept</button>
+          <button onClick={rejectCall}>Reject</button>
+        </div>
+      </div>
+      }
+      {/* )}   */}
+      <div style={{ display:call ? 'none' : 'flex', height: '100%'}}>
+        <Sidebar api={sidebar} func={Person} notification={notification} resetNotif={resetNotif} token={session?.token} active={person}/>
+        <Content api={message} onSubmit={onSubmit} user={person} onClick={startCall} func={Person} />
+      </div>
+    
     </div>
   )
 }
