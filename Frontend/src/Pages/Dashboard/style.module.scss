@@ -1,0 +1,40 @@
+.container{
+    // width: 60rem; 
+    width: 100%;
+    height: 90vh;
+    display: flex;
+    border: solid .01rem rgba(100, 100, 100, .5);
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    border-radius: 1rem;
+    .call_popup{
+        margin-top: 6rem;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        // background-color: rgba(0, 0, 0, .3);
+        // z-index: 1;
+    //     .modaL{
+    //         background-color: white;
+    //         padding: 1rem;
+    //         color: black;
+    //     }
+    }
+    .videocall{
+        position: relative;
+        .remote{
+            position: absolute;
+            right: 0;
+        }
+        button{
+            background-color: red;
+        }
+        .local{
+            width: 100%;
+        }
+    }
+}

@@ -1,0 +1,67 @@
+.sidebar{
+    width: 25%;
+    position: relative;
+    .search{
+        display: flex;
+        justify-content: space-around;
+        margin-top: .5rem;
+        input{
+            width: 52%;
+            border-radius: 2rem;
+            border: none;
+            padding: .5rem 1rem;
+        }
+        button{
+            width: 28%;
+            padding: 0.5rem 0rem;
+            font-size: 0.7rem;
+        }
+    }
+    .card{
+        width: 91%;
+        margin: 1rem 0rem 0rem .5rem;
+        height: 3rem;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        font-size: 1rem;
+        color: wheat;
+        padding: 0rem 1rem;
+        gap: 1rem;
+        border: solid 1px wheat;
+        border-left: none;
+        border-right: none;
+        img{
+            width: 12%;
+        }
+        
+    }
+    .lists{
+        position: absolute;
+        background-color: white;
+        .card{
+            margin-top: 1rem;
+            height: 3rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            font-size: 1rem;
+            color: wheat;
+            padding: 0rem 1rem;
+            gap: 1rem;
+            border: solid 1px wheat;
+            border-left: none;
+            border-right: none;
+            img{
+                width: 12%;
+            }
+            
+        }
+    }
+    
+}
+@media screen and (max-width: 767px) {
+ .sidebar{
+    width: 100%;
+ }
+}
