@@ -1,13 +1,6 @@
-// import { useState } from "react"
-
-// const reloader = (val) =>{
-//     const [load, setload] = useState(false)
-//     setload(true)
-//     if(load) return 
-// }
 export const fetchApi = async(pathname: string ,data: object, token?: string) =>{
-const domain = 'http://localhost:3001/'
-const fetching = await fetch(domain + 'api/' + pathname, {
+const domain =  window.location.origin
+const fetching = await fetch(domain + '/api/' + pathname, {
         method: "POST",
         headers:{
             accept: "application/json",
