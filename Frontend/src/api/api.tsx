@@ -6,7 +6,7 @@
 //     if(load) return 
 // }
 export const fetchApi = async(pathname: string ,data: object, token?: string) =>{
-const domain = 'http://localhost:3001/'
+const domain =  window.location.origin
 const fetching = await fetch(domain + 'api/' + pathname, {
         method: "POST",
         headers:{
